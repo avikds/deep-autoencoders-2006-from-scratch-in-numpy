@@ -97,3 +97,43 @@ def cd1_gradients(v0, W, b_vis, b_hid, rng):
 
     return dW, db_vis, db_hid, v1
 
+# Step 3 - cd1_gradients_linear
+def cd1_gradients_linear(v0, W, b_vis, b_hid, rng):
+    """CD-1 with linear Gaussian hidden units (unit variance).
+    
+    Returns (dW, db_vis, db_hid, v1).
+    """
+
+    # Step 1: Calculate the mean activations of the hidden code units
+    # using the original visible data.
+    m0 = v0 @ W + b_hid
+
+    # Step 2: Sample real-valued hidden states by adding Gaussian noise
+    # with zero mean and unit variance.
+    # This is the only random sampling operation in this step.
+    h0 = m0 + rng.standard_normal(m0.shape)
+
+    # Step 3: Reconstruct the visible-unit probabilities.
+    # The visible units remain logistic, so we apply the sigmoid function.
+    # Do not sample binary visible states.
+    v1 = sigmoid(h0 @ W.T + b_vis)
+
+    # Step 4: Calculate the hidden-unit means from the reconstructed data.
+    # The hidden units are linear, so no sigmoid is applied.
+    m1 = v1 @ W + b_hid
+
+    # Number of samples in the mini-batch.
+    n = v0.shape[0]
+
+    # Step 5: Calculate the weight gradient using positive-phase
+    # and negative-phase statistics.
+    dW = (v0.T @ m0 - v1.T @ m1) / n
+
+    # Calculate the visible-unit bias gradient.
+    db_vis = np.mean(v0 - v1, axis=0)
+
+    # Calculate the hidden-unit bias gradient.
+    db_hid = np.mean(m0 - m1, axis=0)
+
+    return dW, db_vis, db_hid, v1
+
