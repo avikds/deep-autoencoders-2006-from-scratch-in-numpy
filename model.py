@@ -137,3 +137,94 @@ def cd1_gradients_linear(v0, W, b_vis, b_hid, rng):
 
     return dW, db_vis, db_hid, v1
 
+# Step 4 - train_rbm
+def train_rbm(data, n_hidden, epochs, rng, linear_hidden=False, lr=0.1, momentum=0.9, weight_cost=0.0002, batch_size=100):
+    """Mini-batch CD-1 with momentum and a weight penalty.
+    
+    Returns (W, b_vis, b_hid, errors per epoch).
+    """
+
+    # Get the number of training samples and visible units.
+    n, n_vis = data.shape
+
+    # Initialize weights first using the specified random generator.
+    W = 0.1 * rng.standard_normal((n_vis, n_hidden))
+
+    # Initialize visible and hidden biases to zero.
+    b_vis = np.zeros(n_vis)
+    b_hid = np.zeros(n_hidden)
+
+    # Initialize momentum increments for weights and biases.
+    dW_inc = np.zeros_like(W)
+    dbv_inc = np.zeros_like(b_vis)
+    dbh_inc = np.zeros_like(b_hid)
+
+    # Store the reconstruction error after each epoch.
+    errors = []
+
+    # Determine the number of mini-batches.
+    # Any leftover samples are added to the final mini-batch.
+    n_batches = max(1, n // batch_size)
+
+    # Train the RBM for the specified number of epochs.
+    for epoch in range(epochs):
+
+        # Randomly shuffle the training sample indices.
+        order = rng.permutation(n)
+
+        # Accumulate squared reconstruction errors for this epoch.
+        epoch_error = 0.0
+
+        # Process the mini-batches in shuffled order.
+        for batch_idx in range(n_batches):
+
+            # Calculate the mini-batch boundaries.
+            start = batch_idx * batch_size
+
+            # The final batch takes all remaining samples.
+            end = n if batch_idx == n_batches - 1 else start + batch_size
+
+            # Extract the indices for the current mini-batch.
+            batch = order[start:end]
+
+            # Get the original visible-unit data.
+            v0 = data[batch]
+
+            # Perform one CD-1 step using the appropriate hidden-unit model.
+            if linear_hidden:
+                dW, db_vis, db_hid, v1 = cd1_gradients_linear(
+                    v0, W, b_vis, b_hid, rng
+                )
+            else:
+                dW, db_vis, db_hid, v1 = cd1_gradients(
+                    v0, W, b_vis, b_hid, rng
+                )
+
+            # Update the weight momentum increment.
+            # Apply the weight penalty only to the weights.
+            dW_inc = momentum * dW_inc + lr * (dW - weight_cost * W)
+
+            # Update the weights.
+            W += dW_inc
+
+            # Update the visible-bias momentum increment.
+            dbv_inc = momentum * dbv_inc + lr * db_vis
+
+            # Update the visible biases.
+            b_vis += dbv_inc
+
+            # Update the hidden-bias momentum increment.
+            dbh_inc = momentum * dbh_inc + lr * db_hid
+
+            # Update the hidden biases.
+            b_hid += dbh_inc
+
+            # Accumulate squared reconstruction error using
+            # the visible reconstruction returned by the CD-1 step.
+            epoch_error += np.sum((v0 - v1) ** 2)
+
+        # Calculate the average reconstruction error per sample.
+        errors.append(float(epoch_error / n))
+
+    return W, b_vis, b_hid, errors
+
