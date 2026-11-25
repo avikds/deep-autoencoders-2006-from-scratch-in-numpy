@@ -11,6 +11,7 @@ python scaffold.py
 ## Steps
 
 - [x] **1.** rbm_energy
+- [x] **2.** cd1_gradients
 
 ---
 

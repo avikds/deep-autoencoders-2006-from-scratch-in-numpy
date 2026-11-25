@@ -61,3 +61,39 @@ def rbm_energy(v, h, W, b_vis, b_hid):
     # Calculate the energy for each sample.
     return -(visible_term + hidden_term + interaction_term)
 
+# Step 2 - cd1_gradients
+def cd1_gradients(v0, W, b_vis, b_hid, rng):
+    """One CD-1 step: sampled binary hidden states, real-valued confabulation.
+    
+    Returns (dW, db_vis, db_hid, v1).
+    """
+
+    # Step 1: Compute hidden-unit activation probabilities from the data.
+    p0 = sigmoid(v0 @ W + b_hid)
+
+    # Step 2: Sample binary hidden states.
+    # This is the only random sampling operation in CD-1.
+    h0 = (rng.random(p0.shape) < p0).astype(float)
+
+    # Step 3: Compute visible-unit probabilities from the sampled hidden states.
+    # Keep the probabilities as real-valued values; do not sample binary visibles.
+    v1 = sigmoid(h0 @ W.T + b_vis)
+
+    # Step 4: Compute hidden-unit probabilities from the reconstructed visibles.
+    # These probabilities are also kept as real-valued values.
+    p1 = sigmoid(v1 @ W + b_hid)
+
+    # Number of samples in the mini-batch.
+    n = v0.shape[0]
+
+    # Step 5: Calculate the positive-phase minus negative-phase weight gradient.
+    dW = (v0.T @ p0 - v1.T @ p1) / n
+
+    # Calculate the visible-unit bias gradient.
+    db_vis = np.mean(v0 - v1, axis=0)
+
+    # Calculate the hidden-unit bias gradient.
+    db_hid = np.mean(p0 - p1, axis=0)
+
+    return dW, db_vis, db_hid, v1
+
