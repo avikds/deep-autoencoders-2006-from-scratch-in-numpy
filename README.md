@@ -21,6 +21,7 @@ python scaffold.py
 - [x] **9.** autoencoder_backward
 - [x] **10.** random_autoencoder
 - [x] **11.** finetune
+- [x] **12.** fit_pca
 
 ---
 

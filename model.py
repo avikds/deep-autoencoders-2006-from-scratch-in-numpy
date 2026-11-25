@@ -531,3 +531,45 @@ def finetune(layers, x, x_eval, epochs, rng, lr=0.02, momentum=0.9, batch_size=1
 
     return history
 
+# Step 12 - fit_pca
+def fit_pca(x, k):
+    """(mean, components): the k leading principal directions as rows,
+    orthonormal, largest variance first.
+    """
+
+    # Calculate the mean of each feature across all samples.
+    mean = np.mean(x, axis=0)
+
+    # Center the data by subtracting the feature-wise mean.
+    x_centered = x - mean
+
+    # Perform Singular Value Decomposition on the centered data.
+    # Vt contains the principal directions as rows, ordered by
+    # decreasing singular value (and therefore decreasing variance).
+    _, _, Vt = np.linalg.svd(x_centered, full_matrices=False)
+
+    # Select the first k principal components.
+    # Each component is a row with shape (d,).
+    components = Vt[:k].copy()
+
+    return mean, components
+
+
+def pca_reconstruct(x, mean, components):
+    """Reconstruct each row from its k principal coordinates."""
+
+    # Center the input data using the training-set mean.
+    x_centered = x - mean
+
+    # Project the centered data onto the principal components.
+    # These are the low-dimensional PCA coordinates.
+    codes = x_centered @ components.T
+
+    # Project the coordinates back into the original feature space.
+    x_reconstructed = codes @ components
+
+    # Restore the original feature-wise mean.
+    x_reconstructed += mean
+
+    return x_reconstructed
+
