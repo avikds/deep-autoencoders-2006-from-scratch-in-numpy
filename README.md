@@ -22,6 +22,7 @@ python scaffold.py
 - [x] **10.** random_autoencoder
 - [x] **11.** finetune
 - [x] **12.** fit_pca
+- [x] **13.** knn_accuracy
 
 ---
 

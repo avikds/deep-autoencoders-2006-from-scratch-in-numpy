@@ -573,3 +573,50 @@ def pca_reconstruct(x, mean, components):
 
     return x_reconstructed
 
+# Step 13 - knn_accuracy
+def knn_accuracy(train_codes, train_labels, test_codes, test_labels, k=5):
+    """Fraction of test codes whose k nearest training codes vote for the right label."""
+
+    # Store the predicted labels for all test samples.
+    predictions = []
+
+    # Process each test code individually.
+    for test_code in test_codes:
+
+        # Calculate Euclidean distances between the test code
+        # and every training code.
+        distances = np.linalg.norm(
+            train_codes - test_code,
+            axis=1
+        )
+
+        # Sort training indices by distance.
+        # Stable sorting ensures that earlier training samples
+        # win when two or more distances are equal.
+        nearest_indices = np.argsort(
+            distances,
+            kind="stable"
+        )[:k]
+
+        # Retrieve the labels of the k nearest training samples.
+        nearest_labels = train_labels[nearest_indices]
+
+        # Count the occurrences of each digit class.
+        # argmax selects the smallest label when vote counts tie.
+        predicted_label = np.bincount(
+            nearest_labels,
+            minlength=10
+        ).argmax()
+
+        # Store the predicted digit label.
+        predictions.append(predicted_label)
+
+    # Convert predictions into a NumPy array.
+    predictions = np.asarray(predictions)
+
+    # Calculate classification accuracy.
+    accuracy = np.mean(predictions == test_labels)
+
+    # Return the accuracy as a standard Python float.
+    return float(accuracy)
+
