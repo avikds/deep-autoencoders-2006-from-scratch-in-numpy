@@ -17,6 +17,7 @@ python scaffold.py
 - [x] **5.** pretrain_stack
 - [x] **6.** unroll
 - [x] **7.** autoencoder_forward
+- [x] **8.** reconstruction_errors
 
 ---
 

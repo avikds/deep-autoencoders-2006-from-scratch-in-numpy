@@ -336,3 +336,35 @@ def autoencoder_forward(layers, x):
 
     return activations
 
+# Step 8 - reconstruction_errors
+def reconstruction_errors(x_hat, x):
+    """(cross-entropy, squared error), each summed over pixels and averaged over images, as Python floats."""
+
+    # Clip reconstructed pixel probabilities to avoid log(0).
+    # This ensures numerically stable cross-entropy calculations.
+    x_hat_clipped = np.clip(x_hat, 1e-10, 1.0 - 1e-10)
+
+    # Calculate the binary cross-entropy for each pixel.
+    cross_entropy_per_pixel = (
+        x * np.log(x_hat_clipped)
+        + (1.0 - x) * np.log(1.0 - x_hat_clipped)
+    )
+
+    # Sum cross-entropy over pixels for each image,
+    # then average across the mini-batch.
+    cross_entropy = -np.mean(
+        np.sum(cross_entropy_per_pixel, axis=1)
+    )
+
+    # Calculate squared differences between original and reconstructed data.
+    squared_differences = (x - x_hat) ** 2
+
+    # Sum squared errors over pixels for each image,
+    # then average across the mini-batch.
+    squared_error = np.mean(
+        np.sum(squared_differences, axis=1)
+    )
+
+    # Return both metrics as standard Python floats.
+    return float(cross_entropy), float(squared_error)
+
