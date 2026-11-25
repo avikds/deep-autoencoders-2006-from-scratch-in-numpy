@@ -450,3 +450,84 @@ def random_autoencoder(sizes, rng, std=0.1):
 
     return layers
 
+# Step 11 - finetune
+def finetune(layers, x, x_eval, epochs, rng, lr=0.02, momentum=0.9, batch_size=100):
+    """Mini-batch gradient descent with momentum on the cross-entropy, layers updated in place.
+    
+    Returns the squared error per image on x_eval after each epoch.
+    """
+
+    # Initialize one velocity matrix for each weight matrix
+    # and one velocity vector for each bias vector.
+    velocities = [
+        (np.zeros_like(W), np.zeros_like(b))
+        for W, b in layers
+    ]
+
+    # Store the evaluation reconstruction error after each epoch.
+    history = []
+
+    # Number of training samples.
+    n = len(x)
+
+    # Train the autoencoder for the specified number of epochs.
+    for epoch in range(epochs):
+
+        # Randomly shuffle the training sample indices.
+        order = rng.permutation(n)
+
+        # Process the shuffled data in mini-batches.
+        # The final batch may contain fewer than batch_size samples.
+        for start in range(0, n, batch_size):
+
+            # Select the indices for the current mini-batch.
+            batch = order[start:start + batch_size]
+
+            # Extract the current mini-batch.
+            x_batch = x[batch]
+
+            # Perform the forward pass through the autoencoder.
+            acts = autoencoder_forward(layers, x_batch)
+
+            # Calculate the gradients using backpropagation.
+            grads = autoencoder_backward(layers, acts, x_batch)
+
+            # Update every layer using gradient descent with momentum.
+            for i in range(len(layers)):
+
+                # Retrieve the current weights and biases.
+                W, b = layers[i]
+
+                # Retrieve the corresponding gradients.
+                dW, db = grads[i]
+
+                # Retrieve the previous momentum velocities.
+                vW, vb = velocities[i]
+
+                # Update the momentum velocities.
+                vW = momentum * vW - lr * dW
+                vb = momentum * vb - lr * db
+
+                # Update the weights and biases.
+                W = W + vW
+                b = b + vb
+
+                # Store the updated velocities.
+                velocities[i] = (vW, vb)
+
+                # Replace the layer parameters in place.
+                layers[i] = (W, b)
+
+        # Evaluate the autoencoder after completing the current epoch.
+        eval_acts = autoencoder_forward(layers, x_eval)
+
+        # Calculate the squared reconstruction error per image.
+        _, squared_error = reconstruction_errors(
+            eval_acts[-1], x_eval
+        )
+
+        # Store one Python float per epoch.
+        history.append(float(squared_error))
+
+    return history
+

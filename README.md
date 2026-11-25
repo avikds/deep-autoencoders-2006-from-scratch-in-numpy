@@ -20,6 +20,7 @@ python scaffold.py
 - [x] **8.** reconstruction_errors
 - [x] **9.** autoencoder_backward
 - [x] **10.** random_autoencoder
+- [x] **11.** finetune
 
 ---
 
