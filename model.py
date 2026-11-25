@@ -228,3 +228,53 @@ def train_rbm(data, n_hidden, epochs, rng, linear_hidden=False, lr=0.1, momentum
 
     return W, b_vis, b_hid, errors
 
+# Step 5 - pretrain_stack
+def pretrain_stack(data, sizes, epochs, rng, lr=0.1, top_lr=0.001):
+    """Greedy RBM stack; the top RBM has linear Gaussian hidden units.
+    
+    Returns (stack, errors).
+    """
+
+    # Store the RBM parameters and training errors in order.
+    stack = []
+    errors = []
+
+    # The number of RBMs is one less than the number of layer sizes.
+    n_rbms = len(sizes) - 1
+
+    # Start pretraining with the original input data.
+    layer_input = data
+
+    # Train the RBMs sequentially, starting from the bottom layer.
+    for k in range(n_rbms):
+
+        # Identify whether the current RBM is the top-level RBM.
+        is_top = (k == n_rbms - 1)
+
+        # Select the appropriate learning rate and hidden-unit type.
+        current_lr = top_lr if is_top else lr
+        linear_hidden = is_top
+
+        # Train the current RBM on the input received from the previous layer.
+        W, b_vis, b_hid, rbm_errors = train_rbm(
+            layer_input,
+            sizes[k + 1],
+            epochs,
+            rng,
+            linear_hidden=linear_hidden,
+            lr=current_lr
+        )
+
+        # Save the trained RBM parameters (bottom RBM first).
+        stack.append((W, b_vis, b_hid))
+
+        # Save the reconstruction errors for this RBM.
+        errors.append(rbm_errors)
+
+        # For every RBM except the top one, calculate hidden probabilities.
+        # These probabilities become the input to the next RBM.
+        if not is_top:
+            layer_input = sigmoid(layer_input @ W + b_hid)
+
+    return stack, errors
+
