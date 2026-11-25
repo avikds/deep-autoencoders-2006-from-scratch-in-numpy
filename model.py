@@ -368,3 +368,55 @@ def reconstruction_errors(x_hat, x):
     # Return both metrics as standard Python floats.
     return float(cross_entropy), float(squared_error)
 
+# Step 9 - autoencoder_backward
+def autoencoder_backward(layers, acts, x):
+    """Gradients [(dW, db), ...] of the mean cross-entropy, one per layer, by back-propagation."""
+
+    # Number of encoder layers.
+    K = len(layers) // 2
+
+    # Number of training samples in the batch.
+    n = x.shape[0]
+
+    # Initialize the output-layer gradient.
+    # For sigmoid output units with cross-entropy loss,
+    # the derivative with respect to the output pre-activation
+    # simplifies to (reconstruction - original_input) / n.
+    d = (acts[-1] - x) / n
+
+    # Store gradients in the original layer order.
+    grads = [None] * len(layers)
+
+    # Back-propagate from the output layer to the input layer.
+    for i in range(len(layers) - 1, -1, -1):
+
+        # Retrieve the current layer's weights and biases.
+        W, b = layers[i]
+
+        # Calculate the weight gradient.
+        dW = acts[i].T @ d
+
+        # Calculate the bias gradient.
+        db = np.sum(d, axis=0)
+
+        # Store the gradients at the corresponding layer index.
+        grads[i] = (dW, db)
+
+        # Propagate the gradient to the preceding layer.
+        if i > 0:
+
+            # Gradient with respect to the preceding layer's activation.
+            d = d @ W.T
+
+            # Apply the sigmoid derivative if the preceding layer
+            # is not the linear code layer.
+            if i - 1 != K - 1:
+
+                a = acts[i]
+                d = d * a * (1.0 - a)
+
+            # The code layer is linear, so its derivative is 1.
+            # Therefore, no activation derivative is applied there.
+
+    return grads
+
