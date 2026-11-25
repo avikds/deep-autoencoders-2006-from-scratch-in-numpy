@@ -278,3 +278,31 @@ def pretrain_stack(data, sizes, epochs, rng, lr=0.1, top_lr=0.001):
 
     return stack, errors
 
+# Step 6 - unroll
+def unroll(stack):
+    """Encoder (W, b_hid) bottom-up, then decoder (W.T, b_vis) top-down; all copies."""
+
+    layers = []
+
+    # Build the encoder by traversing the RBM stack from bottom to top.
+    for W, b_vis, b_hid in stack:
+
+        # Copy the weights and hidden biases to prevent shared memory.
+        encoder_W = W.copy()
+        encoder_b = b_hid.copy()
+
+        layers.append((encoder_W, encoder_b))
+
+    # Build the decoder by traversing the RBM stack in reverse order.
+    for W, b_vis, b_hid in reversed(stack):
+
+        # Transpose and copy the weights for the decoder.
+        decoder_W = W.T.copy()
+
+        # Copy the visible biases for the decoder layer.
+        decoder_b = b_vis.copy()
+
+        layers.append((decoder_W, decoder_b))
+
+    return layers
+

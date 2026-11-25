@@ -15,6 +15,7 @@ python scaffold.py
 - [x] **3.** cd1_gradients_linear
 - [x] **4.** train_rbm
 - [x] **5.** pretrain_stack
+- [x] **6.** unroll
 
 ---
 
