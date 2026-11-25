@@ -16,6 +16,7 @@ python scaffold.py
 - [x] **4.** train_rbm
 - [x] **5.** pretrain_stack
 - [x] **6.** unroll
+- [x] **7.** autoencoder_forward
 
 ---
 

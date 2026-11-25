@@ -306,3 +306,33 @@ def unroll(stack):
 
     return layers
 
+# Step 7 - autoencoder_forward
+def autoencoder_forward(layers, x):
+    """All activations [x, a1, ..., reconstruction]; the code layer (index K - 1) is linear, the rest logistic."""
+
+    # The total number of layers is twice the number of encoder layers.
+    K = len(layers) // 2
+
+    # Store all activations, starting with the original input.
+    activations = [x]
+
+    # Perform the forward pass through every encoder and decoder layer.
+    for i, (W, b) in enumerate(layers):
+
+        # Calculate the linear transformation for the current layer.
+        s = activations[-1] @ W + b
+
+        # The code layer (last encoder layer) uses a linear activation.
+        if i == K - 1:
+            a_next = s
+
+        # All other layers, including the decoder and output layer,
+        # use the logistic sigmoid activation.
+        else:
+            a_next = sigmoid(s)
+
+        # Store the activation for use by the next layer.
+        activations.append(a_next)
+
+    return activations
+
