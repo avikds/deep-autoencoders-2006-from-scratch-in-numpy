@@ -420,3 +420,33 @@ def autoencoder_backward(layers, acts, x):
 
     return grads
 
+# Step 10 - random_autoencoder
+def random_autoencoder(sizes, rng, std=0.1):
+    """Mirrored autoencoder with N(0, std^2) weights (one draw per layer, input to output) and zero biases."""
+
+    # Construct the complete mirrored architecture.
+    # The decoder mirrors the encoder, excluding the code layer.
+    layer_sizes = list(sizes) + list(sizes[-2::-1])
+
+    # Store the independently initialized weights and biases.
+    layers = []
+
+    # Initialize every layer sequentially from input to output.
+    for i in range(len(layer_sizes) - 1):
+
+        # Determine the input and output dimensions of the current layer.
+        n_in = layer_sizes[i]
+        n_out = layer_sizes[i + 1]
+
+        # Initialize weights using a Gaussian distribution.
+        # Each layer receives its own independent random draw.
+        W = std * rng.standard_normal((n_in, n_out))
+
+        # Initialize biases to zero.
+        b = np.zeros(n_out)
+
+        # Store the weight matrix and bias vector.
+        layers.append((W, b))
+
+    return layers
+
